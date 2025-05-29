@@ -209,7 +209,10 @@ def class_definition(class_def: ClassDef):
             annotation = annotation_definition(node.annotation)
             field_description = f"\n    {node.target.id}: {annotation}"
             if node.value:
-                field_description += f" = {literal_eval(node.value)}"
+                try:
+                    field_description += f" = {literal_eval(node.value)}"
+                except ValueError:
+                    field_description += " = ..."
             class_definition += field_description
 
     return class_definition
