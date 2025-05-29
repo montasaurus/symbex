@@ -35,7 +35,7 @@ def find_symbol_nodes(
 
 
 def code_for_node(
-    code: str, node: AST, class_name: str, signatures: bool, docstrings: bool
+    code: str, node: AST, class_name: str | None, signatures: bool, docstrings: bool
 ) -> Tuple[str, int]:
     "Returns the code for a given node"
     lines = code.split("\n")
