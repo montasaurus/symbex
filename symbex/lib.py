@@ -1,12 +1,12 @@
-import fnmatch
 import ast
-from ast import literal_eval, parse, AST, AsyncFunctionDef, FunctionDef, ClassDef
 import codecs
+import fnmatch
+import re
+import textwrap
+from ast import AST, AsyncFunctionDef, ClassDef, FunctionDef, literal_eval, parse
 from dataclasses import dataclass
 from itertools import zip_longest
 from pathlib import Path
-import re
-import textwrap
 from typing import Iterable, List, Optional, Tuple
 
 
@@ -172,7 +172,7 @@ def function_definition(function_node: AST):
     return f"{def_}{function_name}({arguments_str}){return_annotation}:"
 
 
-def class_definition(class_def):
+def class_definition(class_def: ClassDef):
     # Base classes
     base_classes = []
     for base in class_def.bases:
@@ -203,6 +203,15 @@ def class_definition(class_def):
 
     class_definition = f"class {class_def.name}{signature}:"
 
+    for node in class_def.body:
+        if isinstance(node, ast.AnnAssign):
+            # Handle annotated assignments in classes
+            annotation = annotation_definition(node.annotation)
+            field_description = f"\n    {node.target.id}: {annotation}"
+            if node.value:
+                field_description += f" = {literal_eval(node.value)}"
+            class_definition += field_description
+
     return class_definition
 
 
@@ -220,6 +229,10 @@ def annotation_definition(annotation: AST) -> str:
     elif isinstance(annotation, ast.Tuple):
         elements = ", ".join(annotation_definition(e) for e in annotation.elts)
         return f"({elements})"
+    elif isinstance(annotation, ast.Constant):
+        return annotation.value
+    elif isinstance(annotation, ast.Attribute):
+        return annotation_definition(annotation.value)
     else:
         return "?"
 
